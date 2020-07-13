@@ -34,3 +34,13 @@ def get_report_list(ticker):
         has_next = has_next_button(soup, count)
         start = start + count            
     return result
+
+def parse_company_info(soup):
+    result = {}
+    inf = soup.findAll("div", {"class": "companyInfo"})[0]
+    name = inf.findAll("span",{"class": "companyName"})[0].text
+    spl = name.find(' CIK#: ')
+    result['name'] = name[:spl]
+    result['CIK'] = name[spl + 7: spl + 7 + 10]
+    return result
+    
