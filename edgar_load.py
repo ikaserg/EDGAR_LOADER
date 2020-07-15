@@ -70,7 +70,7 @@ def extract_addr(tags, mail_type):
     result = ''
     for tag in tags:
         if(tag.text.startswith(mail_type)):
-            result = ', '.join([t.text[1:].rstrip() for t in soup.findAll("span", {"class": "mailerAddress"})])
+            result = ', '.join([t.text[1:].rstrip() for t in tag.findAll("span", {"class": "mailerAddress"})])
     return result        
 
 def parse_company_info(soup):
