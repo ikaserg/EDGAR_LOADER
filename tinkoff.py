@@ -5,5 +5,5 @@ def get_api_url():
     return 'https://api-invest.tinkoff.ru/openapi'
 
 def load_ticker_dataframe(token):
-    r=requests.get(url + '/market/stocks', headers={"Authorization":"Bearer "+token})
+    r=requests.get(get_api_url() + '/market/stocks', headers={"Authorization":"Bearer "+token})
     return pd.DataFrame(r.json()['payload']['instruments']) 
