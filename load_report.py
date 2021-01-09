@@ -1,6 +1,7 @@
 from lxml import etree
 import db_pg as db
 import quote_db
+import time
 
 def get_text_by_name(p_node, p_name, p_defvalue):
     if p_node.tag[-len(p_name):] == p_name:
@@ -15,6 +16,15 @@ def read_dei_values(p_root, p_valuekeys):
             res[l_key] = get_text_by_name(l_tag, l_value, res[l_key])
     return res        
 
+def get_report_raw_rows(p_rows):
+    result = []
+    for l_r in p_rows:
+        if (l_r.text is not None) and (l_r.tag[-9:] != 'TextBlock') and (l_r.text[:5] != '<div>'):
+            if len(l_r.text) <= 200:
+                result.append({'tag': l_r.tag, \
+                               'val': l_r.text,\
+                               'context': l_r.attrib['context_ref'] if 'context_ref' in l_r.attrib else ''})
+    return result
 
 def parse_edgar_report(p_db, p_file_name):
     v_root = etree.parse(p_file_name)
@@ -23,6 +33,7 @@ def parse_edgar_report(p_db, p_file_name):
                    'company_name': 'EntityRegistrantName', 'year_end': 'CurrentFiscalYearEndDate', \
                    'period_end': 'DocumentPeriodEndDate'}
     v_rep = read_dei_values(v_root, v_valuekeys)
+    print(v_rep)
     if v_rep['year'] is None:
         v_rep['year'] = v_rep['period_end'][:4]
     if v_rep['period'] is None:
@@ -34,6 +45,17 @@ def parse_edgar_report(p_db, p_file_name):
     v_report_id = quote_db.get_orins_report(p_db, v_company_id, v_rep)
     print(v_company_id)
     print(v_report_id)
+    
+    quote_db.create_tmp_report_rows(p_db)
+
+    v_time = time.time()
+    v_cnt = 0
+    v_new_cnt = 0
+    v_rows = get_report_raw_rows(v_root.xpath("//*[starts-with(name(), 'us-gaap:')]"))
+    print('Time: ' + str(time.time() - v_time))
+    print('Count: ' + str(len(v_rows)))
+    print('New count: ' + str(v_new_cnt))
+
     return 0
 
 class Report:
@@ -163,10 +185,11 @@ class Report:
                         print(r.tag)
                         print(r.text)
                         print(r.attrib)
-                    else:    
+                    else:
                         self.insert_row(report_id, r)
         self.db.commit()
 
-v_db = db.get_db_connect()
-parse_edgar_report(v_db, "C:\\Data\\edgar\\A\\10-K_2009-10-31_091252724\\a-20091031.xml")
+v_db = db.get_db_connect('dbconnect.ini')
+#parse_edgar_report(v_db, "C:\\Data\\edgar\\A\\10-K_2009-10-31_091252724\\a-20091031.xml")
+parse_edgar_report(v_db, "C:\\Data\\edgar\\FSLY\\fsly-10kx123119_htm.xml")
                         

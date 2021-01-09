@@ -1,5 +1,12 @@
 import db_pg as db
 
+def create_tmp_report_rows(p_db):
+    v_sql = 'create table if not exists \
+               tmp_report_rows(report_id integer, tag_name text, context_ref text, val text)';
+    result =  db.execute_query(p_db, v_sql)
+    p_db.commit()
+    return result
+
 def get_company_by_ecik(p_db, p_ecik):
     v_sql = 'select company_id \
                from tbl_companies \
@@ -56,4 +63,13 @@ def get_orins_report(p_db, p_company_id, p_rep):
     result = get_report_by_period(p_db, p_company_id, p_rep['period'], p_rep['year'], p_rep['rtype'])
     if result is None:
         result = ins_report(p_db, p_company_id, p_rep)
-    return result    
+    return result
+
+def get_rep_param_by_tag(p_db, p_tag_name):
+    v_sql = "select tag_id, param_id \
+               from tbl_report_param_tags \
+              where tag_name = %(tag_name)s;"              
+    result = db.do_query_one(p_db, v_sql, {'tag_name': p_tag_name})
+    if result is not None:
+        result = result[0]
+    return result
